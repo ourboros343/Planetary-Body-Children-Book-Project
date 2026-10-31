@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey to Jupiter & Europa | Planetary Children's Book</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        
+        .font-heading {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+
+        /* Starfield canvas styling */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Page Flip Animation effect */
+        .book-container {
+            perspective: 1500px;
+        }
+
+        .book-card {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1), opacity 0.4s ease;
+            transform-style: preserve-3d;
+        }
+
+        .flip-next {
+            animation: flipOutLeft 0.5s forwards ease-in-out;
+        }
+
+        .flip-prev {
+            animation: flipOutRight 0.5s forwards ease-in-out;
+        }
+
+        @keyframes flipOutLeft {
+            0% { transform: rotateY(0deg) scale(1); opacity: 1; }
+            50% { transform: rotateY(-30deg) scale(0.95); opacity: 0.5; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        }
+
+        @keyframes flipOutRight {
+            0% { transform: rotateY(0deg) scale(1); opacity: 1; }
+            50% { transform: rotateY(30deg) scale(0.95); opacity: 0.5; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        }
+
+        /* Custom Scrollbar for book content */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(236, 72, 153, 0.4);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(236, 72, 153, 0.7);
+        }
+
+        /* Pulsing Glow Effect */
+        .glow-jupiter {
+            box-shadow: 0 0 35px rgba(234, 114, 45, 0.35);
+        }
+
+        .glow-europa {
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
+        }
+
+        /* Great Red Spot Storm Animation */
+        @keyframes stormSwirl {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .storm-spin {
+            animation: stormSwirl 25s linear infinite;
+        }
+
+        /* Floating Bobbing Effect */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        .animate-float {
+            animation: floatSlow 5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-3 md:p-6 relative text-slate-100">
+
+    <!-- Starfield Canvas -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Top Navigation Header -->
+    <header class="w-full max-w-5xl flex justify-between items-center z-10 bg-slate-900/80 backdrop-blur-md p-3 md:p-4 rounded-2xl border border-slate-800 shadow-xl mb-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-gradient-to-tr from-orange-500 to-amber-300 rounded-xl text-slate-950 font-bold">
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="font-heading font-bold text-lg md:text-xl text-amber-400 leading-tight">Book Project</h1>
+                <p class="text-xs text-slate-400">Planetary Children's Book • Grade 10</p>
+            </div>
+        </div>
+
+        <!-- Audio & Sound Controls -->
+        <div class="flex items-center gap-2 md:gap-4">
+            <button id="soundToggleBtn" onclick="toggleAudio()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl border border-slate-700 flex items-center gap-2 text-xs md:text-sm font-semibold transition">
+                <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4"></i>
+                <span id="soundLabel" class="hidden sm:inline">Space Ambient: ON</span>
+            </button>
+            <div class="bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hidden sm:block">
+                Target Body: <span class="text-amber-100 font-bold">Jupiter & Europa</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Book Container -->
+    <main class="w-full max-w-5xl z-10 flex-1 flex flex-col justify-center items-center my-2">
+        
+        <!-- Book Outer Wrapper -->
+        <div class="book-container w-full">
+            <div id="bookCard" class="book-card bg-slate-900/90 border border-slate-700/80 rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl shadow-2xl relative min-h-[580px] sm:min-h-[620px] flex flex-col justify-between overflow-hidden">
+                
+                <!-- Dynamic Page Content Insertion -->
+                <div id="pageContent" class="h-full flex-1 flex flex-col justify-center">
+                    <!-- JavaScript populates page content dynamically -->
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Controls & Page Navigation Bar -->
+    <footer class="w-full max-w-5xl z-10 mt-4 bg-slate-900/80 backdrop-blur-md p-3 md:p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-3 shadow-xl">
+        
+        <!-- Navigation Buttons -->
+        <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+            <button id="prevBtn" onclick="changePage(-1)" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center gap-2 text-sm transition border border-slate-700 shadow">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i> Prev Page
+            </button>
+
+            <!-- Page Jump Selector -->
+            <select id="pageSelect" onchange="jumpToPage(this.value)" class="bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs md:text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <!-- Javascript will populate options dynamically -->
+            </select>
+
+            <button id="nextBtn" onclick="changePage(1)" class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-xl flex items-center gap-2 text-sm transition shadow-lg shadow-orange-500/20">
+                Next Page <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="w-full md:w-1/3 flex flex-col gap-1.5">
+            <div class="flex justify-between items-center text-xs font-semibold">
+                <span id="pageProgressLabel" class="text-slate-400">Cover Page</span>
+                <span id="pageCounter" class="text-amber-400 font-bold">0 / 12</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2.5 p-0.5 border border-slate-700">
+                <div id="progressBar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+    </footer>
+
+    <!-- Audio Synth Simulation via Web Audio API -->
+    <script>
+        // Web Audio API ambient noise synthesizer (no external assets required)
+        let audioCtx = null;
+        let isAudioPlaying = false;
+        let ambientGain = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            // Low frequency ambient cosmic drone
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            ambientGain = audioCtx.createGain();
+
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(55, audioCtx.currentTime); // A1 note
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(110, audioCtx.currentTime); // A2 note
+
+            // Filter for deep space atmosphere
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(220, audioCtx.currentTime);
+
+            ambientGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(ambientGain);
+            ambientGain.connect(audioCtx.destination);
+
+            osc1.start();
+            osc2.start();
+        }
+
+        function toggleAudio() {
+            if (!audioCtx) initAudio();
+            const label = document.getElementById('soundLabel');
+            const icon = document.getElementById('soundIcon');
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (isAudioPlaying) {
+                ambientGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+                label.innerText = 'Space Ambient: OFF';
+                icon.setAttribute('data-lucide', 'volume-x');
+                isAudioPlaying = false;
+            } else {
+                ambientGain.gain.exponentialRampToValueAtTime(0.05, audioCtx.currentTime + 0.5);
+                label.innerText = 'Space Ambient: ON';
+                icon.setAttribute('data-lucide', 'volume-2');
+                isAudioPlaying = true;
+            }
+            lucide.createIcons();
+        }
+
+        function playBeep(freq = 440) {
+            if (!audioCtx || !isAudioPlaying) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch(e) {}
+        }
+    </script>
+
+    <!-- Starfield Animation Script -->
+    <script>
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 3000);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.02 + 0.005
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let star of stars) {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.alpha)})`;
+                ctx.fill();
+            }
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawStars();
+    </script>
+
+    <!-- Interactive Book Data & Logic -->
+    <script>
+        // Interactive Storybook Data Structure: Cover (0) + 12 Pages
+        const pages = [
+            
+            {
+                type: 'cover',
+                title: "JOURNEY TO THE KING OF PLANETS",
+                subtitle: "Unlocking Jupiter & Its Ocean Moon, Europa",
+                author: "By Mohammad Hamza • For College Now",
+                tagline: "An Interactive Planetary Exploration Book",
+                illustration: `
+                    <div class="relative flex justify-center items-center my-6">
+                        <div class="w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-gradient-to-tr from-amber-700 via-orange-500 to-amber-200 glow-jupiter relative flex items-center justify-center animate-float overflow-hidden border-4 border-amber-400/30">
+                            <!-- Cloud Bands -->
+                            <div class="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900 via-orange-900 to-transparent"></div>
+                            <div class="w-full h-4 bg-amber-950/40 my-2"></div>
+                            <div class="w-full h-8 bg-orange-950/60 my-1"></div>
+                            <!-- Great Red Spot -->
+                            <div class="absolute bottom-10 right-10 w-12 h-8 bg-red-600/90 rounded-full border-2 border-red-400 border-dashed storm-spin flex items-center justify-center">
+                                <div class="w-6 h-4 bg-red-800 rounded-full"></div>
+                            </div>
+                        </div>
+                        <!-- Europa Orbiting -->
+                        <div class="absolute -top-4 -right-2 sm:right-12 w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 to-slate-100 border-2 border-cyan-200 glow-europa flex items-center justify-center shadow-lg">
+                            <span class="text-[10px] font-bold text-slate-900">Europa</span>
+                        </div>
+                    </div>
+                `,
+                description: "Welcome Mr. Schneider's to the Planetary Book! 12 exciting pages with astrophysics, mini-games, simulations that took way to long to make work, and facts!"
+            },
+
+            // PAGE 1: Welcome to the Cosmic Giant
+            {
+                type: 'standard',
+                pageNumber: 1,
+                title: "Page 1: Meet Jupiter, The Gas Giant King",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        If our solar system had a heavyweight boxing champion, it would unquestionably be <strong class="text-amber-400">Jupiter</strong>! Named after the king of Roman gods, Jupiter is the 5th planet from the Sun and is so gigantic that over <span class="text-amber-300 font-semibold">1,300 Earths could fit inside it</span>!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Unlike Earth, which has a solid rocky surface to stand on, Jupiter is classified as a <strong>Gas Giant</strong>. It is made up almost entirely of <span class="text-cyan-300 font-semibold">Hydrogen (89%) and Helium (10%)</span>—the exact same gas recipe found in stars! If you tried to step onto Jupiter, you would sink thousands of miles into swirling hot gas and liquid until the immense atmospheric pressure crushed you!
+                    </p>
+                `,
+                factBox: "<strong>Did You Know?</strong> Jupiter contains more than TWICE the combined mass of all other planets in our solar system put together!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex flex-col sm:flex-row items-center gap-4">
+                        <div class="text-center sm:text-left flex-1">
+                            <h4 class="font-bold text-amber-400 text-sm">Visualizer: Size Comparison</h4>
+                            <p class="text-xs text-slate-400 mt-1">Tap Earth to see how tiny it looks next to giant Jupiter!</p>
+                        </div>
+                        <div class="flex items-center gap-4 bg-slate-950 p-3 rounded-xl">
+                            <div class="flex flex-col items-center">
+                                <div onclick="playBeep(600)" class="w-4 h-4 bg-blue-500 rounded-full border border-white cursor-pointer hover:scale-125 transition"></div>
+                                <span class="text-[10px] text-slate-400 mt-1">Earth</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 bg-gradient-to-r from-amber-600 to-orange-500 rounded-full border border-amber-300 flex items-center justify-center">
+                                    <span class="text-[9px] font-bold text-slate-950">Jupiter</span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 mt-1">Jupiter (11x wide)</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 2: The Great Red Spot
+            {
+                type: 'standard',
+                pageNumber: 2,
+                title: "Page 2: The Monster Storm – The Great Red Spot",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Look closely at Jupiter's southern hemisphere! That iconic crimson oval is called the <strong class="text-red-400">Great Red Spot</strong>. It is a gigantic counterclockwise hurricane-like storm that has been raging for <strong>at least 350 years</strong>!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        How big is this monster storm? It is wider than the entire planet Earth! Winds along its outer edge scream at velocities exceeding <span class="text-red-300 font-bold">430 miles per hour (700 km/h)</span>—more than double the speed of Category 5 hurricanes on Earth. High atmospheric pressure keeps this massive vortex swirling continuously without stopping.
+                    </p>
+                `,
+                factBox: "<strong>Science Secret:</strong> The red color is likely caused by solar ultraviolet radiation breaking apart chemicals like ammonium hydrosulfide high in the upper atmosphere!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-red-500/30 flex flex-col items-center text-center">
+                        <h4 class="font-bold text-red-400 text-sm mb-2">Interactive Storm Simulator</h4>
+                        <div id="stormContainer" class="w-28 h-28 bg-gradient-to-br from-red-600 via-orange-600 to-amber-700 rounded-full border-4 border-red-400/40 flex items-center justify-center shadow-lg cursor-pointer transition transform hover:scale-105" onclick="speedUpStorm()">
+                            <div id="stormCore" class="w-16 h-10 bg-red-950 rounded-full border-2 border-red-300 border-dashed storm-spin flex items-center justify-center text-xs font-bold text-amber-200">
+                                430 MPH
+                            </div>
+                        </div>
+                        <p id="stormSpeedText" class="text-xs text-amber-300 mt-2">Click the storm to accelerate Jupiter's hurricane winds!</p>
+                    </div>
+                `
+            },
+
+            // PAGE 3: Gravity & Mass Calculator
+            {
+                type: 'standard',
+                pageNumber: 3,
+                title: "Page 3: Crushing Gravity & Enormous Mass",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Because Jupiter is extremely massive (318 times heavier than Earth!), its gravitational force is much stronger. Surface gravity on Jupiter is roughly <strong class="text-amber-400">2.5 times stronger</strong> than what you experience on Earth right now.
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        If you weighed 100 pounds on Earth, you would weigh a staggering <span class="text-amber-300 font-bold">253 pounds on Jupiter</span>! Imagine trying to do jumping jacks while carrying two heavy backpacks filled with bricks on your shoulders!
+                    </p>
+                `,
+                factBox: "<strong>Mass vs Weight:</strong> Your mass (amount of matter inside you) remains identical everywhere in space, but your weight changes based on the gravitational pull of the planet!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-amber-500/30">
+                        <h4 class="font-bold text-amber-400 text-sm mb-2 text-center">Interactive Jupiter Weight Calculator</h4>
+                        <div class="flex flex-col sm:flex-row gap-3 items-center justify-center">
+                            <label class="text-xs text-slate-300">Your Earth Weight (lbs):</label>
+                            <input type="number" id="earthWeightInput" value="100" oninput="calculateJupiterWeight()" class="w-24 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-center text-amber-300 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                            <div class="bg-amber-500/20 border border-amber-500/40 px-4 py-1.5 rounded-xl text-center">
+                                <span class="text-xs text-slate-300">Jupiter Weight: </span>
+                                <span id="jupWeightResult" class="text-amber-300 font-extrabold text-base">253 lbs</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 4: Atmospheric Layers
+            {
+                type: 'standard',
+                pageNumber: 4,
+                title: "Page 4: Inside the Giant – Atmospheric Layers",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Jupiter doesn't have a crusty ground like Earth or Mars. Instead, as you plunge deeper into its atmosphere, the gases become so squished by crushing pressure that they transform into liquid!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Deep inside Jupiter lies a vast ocean of <strong class="text-cyan-400">Liquid Metallic Hydrogen</strong>. Under millions of atmospheres of pressure, hydrogen behaves like a conductive metal that electricity flows through! At the very center sits a dense core made of rock, ice, and metals.
+                    </p>
+                `,
+                factBox: "<strong>Atmospheric Bands:</strong> The light bands are called 'Zones' (rising warmer gas) and the dark stripes are called 'Belts' (sinking cooler gas).",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700 flex flex-col gap-2">
+                        <h4 class="font-bold text-cyan-400 text-xs text-center">Interactive Depth Inspector (Tap a layer)</h4>
+                        <div onclick="inspectLayer('Cloud Tops', 'Temperatures drop to -145°C (-230°F). Made of ammonia ice crystals.')" class="bg-orange-500/20 border border-orange-400/40 p-2 rounded-xl text-xs flex justify-between cursor-pointer hover:bg-orange-500/30 transition">
+                            <span class="font-semibold text-orange-300">1. Cloud Tops (Gas)</span>
+                            <span class="text-slate-400">0 km</span>
+                        </div>
+                        <div onclick="inspectLayer('Liquid Hydrogen Ocean', 'Gas compresses into liquid hydrogen as pressure skyrockets.')" class="bg-amber-600/20 border border-amber-500/40 p-2 rounded-xl text-xs flex justify-between cursor-pointer hover:bg-amber-600/30 transition">
+                            <span class="font-semibold text-amber-300">2. Liquid Hydrogen Layer</span>
+                            <span class="text-slate-400">-1,000 km</span>
+                        </div>
+                        <div onclick="inspectLayer('Metallic Hydrogen', 'Hydrogen acts like liquid metal, creating Jupiter magnetic field!')" class="bg-blue-600/20 border border-blue-400/40 p-2 rounded-xl text-xs flex justify-between cursor-pointer hover:bg-blue-600/30 transition">
+                            <span class="font-semibold text-blue-300">3. Liquid Metallic Hydrogen</span>
+                            <span class="text-slate-400">-20,000 km</span>
+                        </div>
+                        <div onclick="inspectLayer('Dense Rocky Core', 'Super-hot dense core of rock and ice, 10 to 20 times Earth mass!')" class="bg-purple-600/20 border border-purple-400/40 p-2 rounded-xl text-xs flex justify-between cursor-pointer hover:bg-purple-600/30 transition">
+                            <span class="font-semibold text-purple-300">4. Heavy Dense Core</span>
+                            <span class="text-slate-400">-60,000 km</span>
+                        </div>
+                        <div id="layerDetailBox" class="mt-1 p-2 bg-slate-950 rounded-xl text-[11px] text-amber-200 text-center border border-slate-800 italic">
+                            Click any layer above to reveal deep-space structural data!
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 5: The Speedy Spin & Short Day
+            {
+                type: 'standard',
+                pageNumber: 5,
+                title: "Page 5: Fast Spin & Ultra-Short Days",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Even though Jupiter is a giant planet, it spins faster than any other planet in our solar system! One complete rotation takes just under <strong class="text-amber-400">10 Earth hours</strong>. That means a full day-and-night cycle on Jupiter lasts only 9 hours and 56 minutes!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Because Jupiter spins at a dizzying speed of 28,000 mph (45,000 km/h) at its equator, centrifugal force causes the planet to bulge out at its middle and flatten at its poles. Astronomers call this shape an <strong>oblate spheroid</strong>!
+                    </p>
+                `,
+                factBox: "<strong>Year Length:</strong> While a Jupiter day is super short (10 hours), a Jupiter year takes 12 Earth years because it is so far from the Sun!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-amber-500/30 flex flex-col items-center">
+                        <h4 class="font-bold text-amber-400 text-sm mb-2">Day Length Comparison</h4>
+                        <div class="grid grid-cols-2 gap-4 w-full text-center">
+                            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                <div class="text-2xl font-bold text-blue-400">24 Hours</div>
+                                <div class="text-xs text-slate-400">1 Earth Day</div>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded-xl border border-amber-500/50">
+                                <div class="text-2xl font-bold text-amber-400">9.9 Hours</div>
+                                <div class="text-xs text-slate-400">1 Jupiter Day ⚡</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 6: Powerful Magnetic Field
+            {
+                type: 'standard',
+                pageNumber: 6,
+                title: "Page 6: The Magnetic Shield Monster",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Deep inside Jupiter, electric currents generated by swirling liquid metallic hydrogen create an unbelievably powerful <strong class="text-emerald-400">magnetosphere</strong> (magnetic field). Jupiter's magnetic field is <span class="text-emerald-300 font-bold">20,000 times stronger than Earth's</span>!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        This magnetic field creates a huge protective bubble in space. If Jupiter's magnetosphere glowed in visible light at night, it would appear larger than the full moon in our sky! It traps charged radiation particles, making surrounding space dangerous for spacecraft.
+                    </p>
+                `,
+                factBox: "<strong>Spectacular Auroras:</strong> Powerful magnetic forces channel solar particles into Jupiter's poles, producing intense, permanent glowing auroras!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-emerald-500/30 flex items-center justify-between">
+                        <div class="space-y-1">
+                            <h4 class="font-bold text-emerald-400 text-sm">Magnetic Field Power</h4>
+                            <p class="text-xs text-slate-300">Earth: 0.5 Gauss | Jupiter: 4.2 to 14 Gauss</p>
+                        </div>
+                        <button onclick="triggerAuroraEffect()" class="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-bold rounded-xl text-xs hover:scale-105 transition shadow-md">
+                            Spark Jupiter Aurora ✨
+                        </button>
+                    </div>
+                `
+            },
+
+            // PAGE 7: The Galilean Moons Overview
+            {
+                type: 'standard',
+                pageNumber: 7,
+                title: "Page 7: Jupiter's Moon System – A Mini Solar System",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Jupiter acts like a miniature planetary system! As of today, astronomers have discovered at least <strong class="text-amber-400">95 officially recognized moons</strong> orbiting Jupiter!
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        The four largest moons are called the <strong>Galilean Moons</strong> because they were discovered by famous astronomer <em>Galileo Galilei</em> in 1610 using his primitive telescope: <span class="text-yellow-300 font-semibold">Io</span>, <span class="text-cyan-300 font-semibold">Europa</span>, <span class="text-emerald-300 font-semibold">Ganymede</span>, and <span class="text-purple-300 font-semibold">Callisto</span>.
+                    </p>
+                `,
+                factBox: "<strong>Historical Impact:</strong> Galileo's discovery proved that not everything in space orbits Earth, causing a revolution in science!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-3 rounded-2xl border border-slate-700">
+                        <h4 class="font-bold text-amber-400 text-xs text-center mb-2">The Four Giant Galilean Moons</h4>
+                        <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+                            <div class="bg-slate-950 p-2 rounded-xl border border-yellow-500/40">
+                                <div class="w-6 h-6 bg-yellow-400 rounded-full mx-auto mb-1"></div>
+                                <div class="font-bold text-yellow-300">Io</div>
+                                <div class="text-slate-400">Volcanic</div>
+                            </div>
+                            <div class="bg-slate-950 p-2 rounded-xl border border-cyan-500/40">
+                                <div class="w-6 h-6 bg-cyan-300 rounded-full mx-auto mb-1"></div>
+                                <div class="font-bold text-cyan-300">Europa</div>
+                                <div class="text-slate-400">Ice Ocean</div>
+                            </div>
+                            <div class="bg-slate-950 p-2 rounded-xl border border-emerald-500/40">
+                                <div class="w-7 h-7 bg-emerald-400 rounded-full mx-auto mb-1"></div>
+                                <div class="font-bold text-emerald-300">Ganymede</div>
+                                <div class="text-slate-400">Largest</div>
+                            </div>
+                            <div class="bg-slate-950 p-2 rounded-xl border border-purple-500/40">
+                                <div class="w-6 h-6 bg-purple-400 rounded-full mx-auto mb-1"></div>
+                                <div class="font-bold text-purple-300">Callisto</div>
+                                <div class="text-slate-400">Cratered</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 8: Spotlight on Europa (Ice Moon)
+            {
+                type: 'standard',
+                pageNumber: 8,
+                title: "Page 8: Europa – The Ocean World Moon",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Out of all Jupiter's moons, <strong class="text-cyan-300">Europa</strong> is one of the most exciting locations in our entire solar system! Slightly smaller than Earth's moon, Europa is covered in a bright, smooth shell of solid water ice crisscrossed by dark reddish cracks.
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Scientists believe that underneath Europa's 10 to 15-mile thick icy crust lies a <span class="text-cyan-400 font-bold">liquid saltwater ocean containing twice as much water as all of Earth's oceans combined</span>!
+                    </p>
+                `,
+                factBox: "<strong>Tidal Heating:</strong> Jupiter's immense gravitational pull continuously flexes and squeezes Europa, generating internal friction and heat that keeps its ocean liquid underground!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-cyan-500/40 flex flex-col sm:flex-row items-center gap-4">
+                        <div class="w-20 h-20 bg-gradient-to-tr from-cyan-400 via-sky-200 to-white rounded-full glow-europa border-2 border-cyan-200 flex-shrink-0 flex items-center justify-center">
+                            <span class="text-[10px] font-bold text-slate-950">ICE CRUST</span>
+                        </div>
+                        <div class="text-xs text-slate-300 space-y-1">
+                            <p class="font-bold text-cyan-300 text-sm">Subsurface Ocean Explorer</p>
+                            <p>• Surface Temp: -160°C (-260°F)</p>
+                            <p>• Ocean Depth: 40–100 miles deep</p>
+                            <p>• Warm hydrothermal vents may warm the sea floor!</p>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 9: Life on Europa? Astrobiology
+            {
+                type: 'standard',
+                pageNumber: 9,
+                title: "Page 9: Could Alien Life Exist inside Europa?",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Where there is liquid water, energy, and organic chemical elements, there is a chance for life! Scientists studying <strong>astrobiology</strong> believe Europa's dark subterranean ocean is one of our best chances to find extraterrestrial microbial life.
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Because sunbeams cannot penetrate the thick outer ice crust, any life on Europa would not rely on photosynthesis. Instead, organisms would survive through <strong class="text-amber-400">chemosynthesis</strong>—getting energy from chemical reactions powered by hydrothermal vents on the ocean floor, similar to deep-sea tubeworms on Earth!
+                    </p>
+                `,
+                factBox: "<strong>3 Recipe Ingredients for Life:</strong> Liquid Water 💧 + Chemical Building Blocks (C, H, N, O, P, S) 🧪 + Energy Source ⚡.",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-3 rounded-2xl border border-emerald-500/30 text-center">
+                        <h4 class="font-bold text-emerald-400 text-xs mb-2">Check the Ingredients for Life on Europa</h4>
+                        <div class="flex justify-around text-xs font-semibold">
+                            <div class="text-cyan-300">✅ Liquid Water</div>
+                            <div class="text-amber-300">✅ Hydrothermal Heat</div>
+                            <div class="text-emerald-300">✅ Organic Chemistry</div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 10: Space Probes – Juno & Europa Clipper
+            {
+                type: 'standard',
+                pageNumber: 10,
+                title: "Page 10: Robotic Explorers – Space Missions",
+                content: `
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Humans have sent 9 robotic spacecraft to explore Jupiter! NASA's <strong class="text-amber-400">Juno spacecraft</strong> arrived in 2016 and orbits Jupiter, peering beneath its thick clouds using specialized microwave radar to measure water content and gravity fields.
+                    </p>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+                        Next up: NASA's flagship <strong class="text-cyan-300">Europa Clipper mission</strong> is traveling to perform dozens of close flybys of Europa to analyze its ice shell, taste water plumes sprayed into space, and confirm whether its ocean is habitable!
+                    </p>
+                `,
+                factBox: "<strong>Solar Power Record:</strong> Juno is the farthest solar-powered spacecraft in history, using three gigantic 30-foot solar panels to capture faint sunlight!",
+                interactiveWidget: `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex justify-around items-center">
+                        <div class="text-center">
+                            <div class="text-amber-400 font-bold text-sm">JUNO PROBE</div>
+                            <div class="text-[10px] text-slate-400">In Orbit Since 2016</div>
+                        </div>
+                        <i data-lucide="rocket" class="w-6 h-6 text-amber-400 animate-bounce"></i>
+                        <div class="text-center">
+                            <div class="text-cyan-300 font-bold text-sm">EUROPA CLIPPER</div>
+                            <div class="text-[10px] text-slate-400">Targeting Europa</div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // PAGE 11: Interactive Space Mission Mini-Game
+            {
+                type: 'game',
+                pageNumber: 11,
+                title: "Page 11: Mini-Game – Space Probe Navigator",
+                content: `
+                    <p class="text-slate-300 text-xs sm:text-sm mb-3 text-center">
+                        Pilot your space probe through Jupiter's magnetosphere! Avoid radiation belts and safely align with Europa!
+                    </p>
+                `
+            },
+
+            // PAGE 12: Knowledge Quiz & Conclusion
+            {
+                type: 'quiz',
+                pageNumber: 12,
+                title: "Page 12: Planetary Quiz",
+                content: `
+                    <p class="text-slate-300 text-sm mb-4 text-center">
+                        Test your middle-school planetary science knowledge to earn your Junior Astrophysicist Badge!
+                    </p>
+                `
+            }
+        ];
+
+        let currentPageIndex = 0;
+        let stormSpeedMultiplier = 1;
+
+        // Initialize Page Navigation dropdown options
+        function buildPageDropdown() {
+            const select = document.getElementById('pageSelect');
+            select.innerHTML = '';
+            
+            pages.forEach((page, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.innerText = index === 0 ? "Cover Page" : `Page ${index}: ${page.title.split(':')[1] || page.title}`;
+                select.appendChild(opt);
+            });
+        }
+
+        // Render Page Content
+        function renderPage(index) {
+            const container = document.getElementById('pageContent');
+            const page = pages[index];
+
+            // Update footer progress indicators
+            document.getElementById('pageProgressLabel').innerText = index === 0 ? "Cover Page" : `Page ${index} of 12`;
+            document.getElementById('pageCounter').innerText = `${index} / 12`;
+            document.getElementById('progressBar').style.width = `${(index / 12) * 100}%`;
+            document.getElementById('pageSelect').value = index;
+
+            // Enable/Disable buttons
+            document.getElementById('prevBtn').disabled = (index === 0);
+            document.getElementById('nextBtn').disabled = (index === pages.length - 1);
+
+            if (page.type === 'cover') {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-center py-4">
+                        <span class="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold text-xs rounded-full uppercase tracking-wider mb-2">
+                            ${page.tagline}
+                        </span>
+                        <h1 class="font-heading font-extrabold text-2xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-100 mb-2 leading-tight">
+                            ${page.title}
+                        </h1>
+                        <h2 class="text-sm sm:text-lg font-medium text-slate-300 mb-2">
+                            ${page.subtitle}
+                        </h2>
+                        
+                        ${page.illustration}
+
+                        <p class="text-xs sm:text-sm text-slate-300 max-w-xl my-3 px-4 leading-relaxed">
+                            ${page.description}
+                        </p>
+
+                        <div class="mt-2 text-xs text-amber-400 font-bold bg-slate-950/80 px-4 py-2 rounded-xl border border-slate-800">
+                            ${page.author}
+                        </div>
+                    </div>
+                `;
+            } else if (page.type === 'standard') {
+                container.innerHTML = `
+                    <div class="flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <h2 class="font-heading text-lg sm:text-xl font-bold text-amber-300">
+                                    ${page.title}
+                                </h2>
+                                <span class="text-xs bg-slate-800 border border-slate-700 text-slate-400 px-2.5 py-1 rounded-lg font-mono">
+                                    Grade 10 College Now
+                                </span>
+                            </div>
+
+                            <div class="custom-scroll max-h-[220px] overflow-y-auto pr-1">
+                                ${page.content}
+                            </div>
+                        </div>
+
+                        <!-- Interactive Area -->
+                        <div class="my-3">
+                            ${page.interactiveWidget || ''}
+                        </div>
+
+                        <!-- Fact Box -->
+                        <div class="bg-amber-500/10 border-l-4 border-amber-400 p-3 rounded-r-xl text-xs sm:text-sm text-amber-200">
+                            ${page.factBox}
+                        </div>
+                    </div>
+                `;
+            } else if (page.type === 'game') {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-between h-full">
+                        <h2 class="font-heading text-lg sm:text-xl font-bold text-amber-300 mb-1">
+                            ${page.title}
+                        </h2>
+                        ${page.content}
+                        
+                        <div class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden my-2">
+                            <div id="gameCanvas" class="w-full h-48 bg-slate-900 rounded-xl relative border border-slate-800 flex items-center justify-between px-6 overflow-hidden">
+                                <div id="playerProbe" class="w-8 h-8 bg-amber-400 rounded-lg border-2 border-amber-200 flex items-center justify-center font-bold text-slate-950 text-xs transition-all duration-150 relative z-10 shadow-lg shadow-amber-500/50">
+                                    🚀
+                                </div>
+                                <div id="targetEuropa" class="w-12 h-12 bg-cyan-300 rounded-full border-2 border-white flex items-center justify-center font-bold text-slate-950 text-[10px] shadow-lg shadow-cyan-400/50">
+                                    Europa
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 mt-3">
+                                <button onclick="moveProbe('up')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 rounded-xl font-bold text-xs">
+                                    ▲ Move Up
+                                </button>
+                                <button onclick="moveProbe('down')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 rounded-xl font-bold text-xs">
+                                    ▼ Move Down
+                                </button>
+                                <button onclick="launchProbe()" class="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold rounded-xl text-xs hover:scale-105 transition shadow-md">
+                                    Launch Mission 🛰️
+                                </button>
+                            </div>
+                            <p id="gameStatus" class="text-xs text-amber-300 font-bold mt-2">Adjust height and click Launch!</p>
+                        </div>
+
+                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-xs text-slate-300 text-center w-full">
+                            <strong>Mission Objective:</strong> Safely navigate Jupiter's intense gravitational pull to orbit Europa!
+                        </div>
+                    </div>
+                `;
+            } else if (page.type === 'quiz') {
+                container.innerHTML = `
+                    <div class="flex flex-col justify-between h-full">
+                        <div>
+                            <h2 class="font-heading text-lg sm:text-xl font-bold text-amber-300 text-center mb-1">
+                                ${page.title}
+                            </h2>
+                            ${page.content}
+
+                            <div id="quizBox" class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 space-y-3">
+                                <p class="text-sm font-semibold text-amber-200" id="quizQuestion">
+                                    1. Why is Jupiter called a "Gas Giant"?
+                                </p>
+                                <div class="grid grid-cols-1 gap-2 text-xs" id="quizOptions">
+                                    <button onclick="checkQuizAnswer(false)" class="p-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left text-slate-300 transition">
+                                        A) It is made entirely of solid rock and oxygen.
+                                    </button>
+                                    <button onclick="checkQuizAnswer(true)" class="p-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left text-slate-300 transition">
+                                        B) It is mostly composed of Hydrogen and Helium gas.
+                                    </button>
+                                    <button onclick="checkQuizAnswer(false)" class="p-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left text-slate-300 transition">
+                                        C) It is a star that went out.
+                                    </button>
+                                </div>
+                                <div id="quizFeedback" class="text-xs font-bold text-center mt-2 h-4"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-3 rounded-xl text-center text-xs text-amber-200 mt-2">
+                             <strong>Congratulations!</strong> You have completed Planetary Book!
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Re-initialize Lucide Icons for dynamic content
+            lucide.createIcons();
+        }
+
+        // Change Page Function
+        function changePage(direction) {
+            const bookCard = document.getElementById('bookCard');
+            
+            // Animation class based on direction
+            if (direction > 0) {
+                bookCard.classList.add('flip-next');
+            } else {
+                bookCard.classList.add('flip-prev');
+            }
+
+            playBeep(350 + (currentPageIndex * 30));
+
+            setTimeout(() => {
+                currentPageIndex += direction;
+                if (currentPageIndex < 0) currentPageIndex = 0;
+                if (currentPageIndex >= pages.length) currentPageIndex = pages.length - 1;
+                renderPage(currentPageIndex);
+                bookCard.classList.remove('flip-next', 'flip-prev');
+            }, 250);
+        }
+
+        function jumpToPage(index) {
+            currentPageIndex = parseInt(index);
+            renderPage(currentPageIndex);
+            playBeep(400);
+        }
+
+        // --- Interactive Widget Handler Functions ---
+
+        // Page 2: Storm Speedup
+        function speedUpStorm() {
+            stormSpeedMultiplier += 0.5;
+            if (stormSpeedMultiplier > 4) stormSpeedMultiplier = 1;
+            const core = document.getElementById('stormCore');
+            const text = document.getElementById('stormSpeedText');
+            
+            core.style.animationDuration = `${25 / stormSpeedMultiplier}s`;
+            const speed = Math.round(430 * stormSpeedMultiplier);
+            core.innerText = `${speed} MPH`;
+            text.innerText = `Storm speed boosted to ${speed} MPH!`;
+            playBeep(500 + (stormSpeedMultiplier * 100));
+        }
+
+        // Page 3: Gravity Calculator
+        function calculateJupiterWeight() {
+            const input = document.getElementById('earthWeightInput');
+            const result = document.getElementById('jupWeightResult');
+            const earthW = parseFloat(input.value) || 0;
+            const jupW = Math.round(earthW * 2.53);
+            result.innerText = `${jupW} lbs`;
+        }
+
+        // Page 4: Layer Inspector
+        function inspectLayer(title, detail) {
+            const box = document.getElementById('layerDetailBox');
+            box.innerHTML = `<strong>${title}:</strong> ${detail}`;
+            playBeep(450);
+        }
+
+        // Page 6: Aurora Spark Effect
+        function triggerAuroraEffect() {
+            const card = document.getElementById('bookCard');
+            card.style.boxShadow = '0 0 50px rgba(16, 185, 129, 0.6)';
+            playBeep(800);
+            setTimeout(() => {
+                card.style.boxShadow = '';
+            }, 1200);
+        }
+
+        // Page 11: Probe Game Variables
+        let probeY = 50; // percentage
+        function moveProbe(dir) {
+            const probe = document.getElementById('playerProbe');
+            if (dir === 'up') probeY = Math.max(10, probeY - 20);
+            if (dir === 'down') probeY = Math.min(80, probeY + 20);
+            probe.style.transform = `translateY(${probeY - 50}px)`;
+            playBeep(300);
+        }
+
+        function launchProbe() {
+            const probe = document.getElementById('playerProbe');
+            const status = document.getElementById('gameStatus');
+            probe.style.transition = 'all 1.5s ease-in-out';
+            probe.style.left = '75%';
+
+            setTimeout(() => {
+                if (probeY >= 30 && probeY <= 70) {
+                    status.innerText = "🎯 SUCCESS! Probe successfully entered Europa's orbit!";
+                    status.className = "text-xs text-emerald-400 font-bold mt-2 animate-bounce";
+                    playBeep(700);
+                } else {
+                    status.innerText = "⚠️ MISSED! Gravity slingshot lost the probe. Try again!";
+                    status.className = "text-xs text-red-400 font-bold mt-2";
+                    playBeep(200);
+                }
+            }, 1500);
+        }
+
+        // Page 12: Quiz Check
+        function checkQuizAnswer(isCorrect) {
+            const feedback = document.getElementById('quizFeedback');
+            if (isCorrect) {
+                feedback.innerHTML = "<span class='text-emerald-400'>Correct! Jupiter is primarily composed of Hydrogen and Helium!</span>";
+                playBeep(600);
+            } else {
+                feedback.innerHTML = "<span class='text-red-400'> Wrong! Remember, Jupiter is made of Hydrogen and Helium gas.</span>";
+                playBeep(250);
+            }
+        }
+
+        
+        window.onload = function() {
+            buildPageDropdown();
+            renderPage(0);
+        };
+    </script>
+</body>
+</html>
